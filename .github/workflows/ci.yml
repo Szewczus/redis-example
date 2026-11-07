@@ -3,7 +3,7 @@ name: CI #name: CI to nazwa widoczna w zakładce Actions.
 on: #to kiedy workflow startuje (to, o co pytasz). Jest na tym samym poziomie wcięcia co name i jobs, czyli na samym początku linii, bez wcięcia.
   pull_request:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs: #to co ma się wykonać.
   build-test:
