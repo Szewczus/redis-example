@@ -5,6 +5,10 @@ on: #to kiedy workflow startuje (to, o co pytasz). Jest na tym samym poziomie wc
   push:
     branches: [master]
 
+permissions:
+  contents: read
+  packages: read
+
 jobs: #to co ma się wykonać.
   build-test:
     runs-on: ubuntu-latest
@@ -25,3 +29,6 @@ jobs: #to co ma się wykonać.
           java-version: 21
           cache: maven
       - run: mvn -B verify
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SPRING_DATA_REDIS_PORT: 6379
