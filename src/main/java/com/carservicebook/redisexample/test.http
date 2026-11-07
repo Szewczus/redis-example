@@ -1,0 +1,54 @@
+@host = http://localhost:8080
+
+### 1. Pierwsze wywołanie: oczekiwane MISS, ok. 3000 ms
+POST {{host}}/projections
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "processId": "6785786",
+  "list": ["test1", "test2"]
+}
+
+### 2. Identyczne żądanie: oczekiwane HIT, kilka ms
+POST {{host}}/projections
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "processId": "6785786",
+  "list": ["test1", "test2"]
+}
+
+### 3. Inna kolejność i wielkość liter aktywów: nadal HIT (klucz kanoniczny)
+POST {{host}}/projections
+Content-Type: application/json
+
+{
+  "version": "1.0",
+  "processId": "6785786",
+  "list": ["test2", "Test1"]
+}
+
+### 5. Nowa wersja aplikacji: MISS
+POST {{host}}/projections
+Content-Type: application/json
+
+{
+  "version": "1.1",
+  "processId": "6785786",
+  "list": ["test2", "Test1"]
+}
+
+### 7. Inny processId
+POST {{host}}/projections
+Content-Type: application/json
+
+{
+  "version": "1.1",
+  "processId": "68765764",
+  "list": ["test2", "Test1"]
+}
+
+### 8. Licznik realnych obliczeń
+GET {{host}}/stats

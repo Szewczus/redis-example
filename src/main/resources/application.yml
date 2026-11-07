@@ -1,1 +1,9 @@
-spring.application.name=redis-example
+spring:
+  application:
+    name: redis-example
+  data:
+    redis:
+      host: localhost
+      port: 6379
+projection:
+  ttl-minutes: 30

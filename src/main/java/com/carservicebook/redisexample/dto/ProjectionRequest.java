@@ -1,4 +1,10 @@
 package com.carservicebook.redisexample.dto;
 
-public record ProjectionRequest() {
+import java.util.List;
+
+public record ProjectionRequest(
+        String version,
+        String processId,
+        List<String> list
+) {
 }

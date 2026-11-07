@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: projection-warmup
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 540
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: warmup
+              image: paybridge/projection-warmup:1.0
+              env:
+                - name: TOP_N
+                  value: "500"
