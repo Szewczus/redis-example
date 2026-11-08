@@ -17,12 +17,14 @@ public class ProjectionService {
     private final StringRedisTemplate redis;
     private final Duration ttl;
     private final AtomicInteger computeCount = new AtomicInteger();
+    //po tym czasie Redis sam usunie blokadę. To zabezpieczenie na wypadek, gdyby aplikacja padła w trakcie liczenia i nie zdjęła blokady. Musi być dłuższy niż czas obliczeń (u nas 3 s).
+    private static final Duration LOCK_TTL = Duration.ofSeconds(10);
 
 
     public ProjectionService(StringRedisTemplate redis,
                              @Value("${projection.ttl-minutes}") long ttlMinutes) {
         this.redis = redis;
-        this.ttl = Duration.ofMinutes(ttlMinutes);//po tym czasie Redis sam usunie blokadę. To zabezpieczenie na wypadek, gdyby aplikacja padła w trakcie liczenia i nie zdjęła blokady. Musi być dłuższy niż czas obliczeń (u nas 3 s).
+        this.ttl = Duration.ofMinutes(ttlMinutes);
     }
 
     public ProjectionResponse getProjection(ProjectionRequest request) {
@@ -31,22 +33,22 @@ public class ProjectionService {
 
         String cached = redis.opsForValue().get(key);
         if (cached != null) {
-            return new ProjectionResponse("HIT", key, start, cached);
+            return new ProjectionResponse("HIT", key, System.currentTimeMillis() -start, cached);
         }
 
         String lockKey = "lock:" + key;
         String token = UUID.randomUUID().toString();
-        Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, token, ttl);
+        Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, token, LOCK_TTL);
 
         if (Boolean.TRUE.equals(acquired)) {
             try {
                 String again = redis.opsForValue().get(key);
                 if (again != null) {
-                    return new ProjectionResponse("HIT", key, start, again);
+                    return new ProjectionResponse("HIT", key, System.currentTimeMillis() -start, again);
                 }
                 String result = compute(request);
                 redis.opsForValue().set(key, result, ttl);
-                return new ProjectionResponse("MISS", key, start, result);
+                return new ProjectionResponse("MISS", key, System.currentTimeMillis() -start, result);
             } finally {
                 if (token.equals(redis.opsForValue().get(lockKey))) {
                     redis.delete(lockKey);
@@ -56,12 +58,12 @@ public class ProjectionService {
 
         String awaited = waitForValue(key);
         if (awaited != null) {
-            return new ProjectionResponse("WAITED", key, start, awaited);
+            return new ProjectionResponse("WAITED", key, System.currentTimeMillis() -start, awaited);
         }
 
         String result = compute(request);
         redis.opsForValue().set(key, result, ttl);
-        return new ProjectionResponse("MISS_FALLBACK", key, start, result);
+        return new ProjectionResponse("MISS_FALLBACK", key, System.currentTimeMillis() -start, result);
     }
 
     private String waitForValue(String key) {
