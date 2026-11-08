@@ -10,6 +10,18 @@ permissions:
   packages: read
 
 jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
   build-test:
     runs-on: ubuntu-latest
     services:
@@ -35,7 +47,7 @@ jobs:
           SPRING_DATA_REDIS_PORT: 6379
 
   publish-image:
-    needs: build-test
+    needs: [build-test, security-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
