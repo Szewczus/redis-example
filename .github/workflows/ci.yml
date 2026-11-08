@@ -60,5 +60,18 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          load: true
+          tags: ghcr.io/szewczus/redis-example:${{ github.sha }}
+
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/szewczus/redis-example:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
           push: true
           tags: ghcr.io/szewczus/redis-example:${{ github.sha }}
