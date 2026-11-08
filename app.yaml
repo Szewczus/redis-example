@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-example
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis-example
+  template:
+    metadata:
+      labels:
+        app: redis-example
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: app
+          image: ghcr.io/szewczus/redis-example:deef889f695922c8b9a611c08cdb01b2eadd02f1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-example
+spec:
+  selector:
+    app: redis-example
+  ports:
+    - port: 8080
+      targetPort: 8080
